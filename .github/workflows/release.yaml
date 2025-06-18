@@ -11,36 +11,46 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository using GH_PAT
+        uses: actions/checkout@v3
         with:
           token: ${{ secrets.GH_PAT }}
 
-      - uses: actions/setup-node@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
         with:
           node-version: '18'
 
-      - run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Extract version
+      - name: Extract version from package.json
         id: get_version
-        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Check if tag exists
+      - name: Check if tag already exists
         id: check_tag
         run: |
           TAG="v${{ steps.get_version.outputs.version }}"
           echo "tag=$TAG" >> $GITHUB_OUTPUT
-          if git rev-parse "$TAG" >/dev/null 2>&1; then exit 1; fi
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists"
+            exit 1
+          fi
 
       - name: Build package
         run: npm run build
 
-      - name: Tag and push
+      - name: Tag and push using authenticated remote
         env:
           TAG: ${{ steps.check_tag.outputs.tag }}
+          GH_PAT: ${{ secrets.GH_PAT }}
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
+          git remote set-url origin https://x-access-token:${GH_PAT}@github.com/${{ github.repository }}.git
           git tag "$TAG"
           git push origin "$TAG"
 
