@@ -1,0 +1,55 @@
+name: Tag Release on Version Change
+
+on:
+  push:
+    paths:
+      - 'package.json'
+  workflow_dispatch:
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GH_PAT }}
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - run: npm ci
+
+      - name: Extract version
+        id: get_version
+        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
+      - name: Check if tag exists
+        id: check_tag
+        run: |
+          TAG="v${{ steps.get_version.outputs.version }}"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          if git rev-parse "$TAG" >/dev/null 2>&1; then exit 1; fi
+
+      - name: Build package
+        run: npm run build
+
+      - name: Tag and push
+        env:
+          TAG: ${{ steps.check_tag.outputs.tag }}
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git tag "$TAG"
+          git push origin "$TAG"
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+        with:
+          tag_name: ${{ steps.check_tag.outputs.tag }}
+          release_name: Release ${{ steps.check_tag.outputs.tag }}
+          draft: false
+          prerelease: false
