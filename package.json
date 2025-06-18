@@ -3,7 +3,7 @@
   "version": "0.1.1",
   "description": "A tiny utility library with a greeting function",
   "main": "dist/test-lib.umd.cjs",
-  "module": "dist/test-lib.js",
+  "module": "dist/test-lib.mjs",
   "types": "dist/index.d.ts",
   "files": [
     "dist"

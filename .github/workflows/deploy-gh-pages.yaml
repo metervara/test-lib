@@ -22,7 +22,7 @@ jobs:
         run: |
           mkdir -p docs
           cp -r example/* docs/
-          cp dist/test-lib.js docs/
+          cp dist/test-lib.mjs docs/
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
