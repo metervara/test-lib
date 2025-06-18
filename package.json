@@ -1,6 +1,6 @@
 {
   "name": "@metervara/test-lib",
-  "version": "0.1.2",
+  "version": "0.1.2W",
   "description": "A tiny utility library with a greeting function",
   "main": "dist/test-lib.umd.cjs",
   "module": "dist/test-lib.mjs",
@@ -10,7 +10,8 @@
   ],
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build-original": "tsc && vite build",
+    "build": "tsc && vite build && mkdir -p docs && cp -r example/* docs/ && cp dist/test-lib.mjs docs/",
     "preview": "vite preview",
     "prepublishOnly": "npm run build"
   },
